@@ -56,7 +56,11 @@ before the first deploy: db-migrate → books, the nine books, row-level securit
 deployed name, and the composition deploys `wrangler deploy --name
 <workerName>-<env>`, so `BOOKS_SERVICE` must name `<reponame>-web-<env>`:
 the template writes `<reponame>-web-__ENV__`, and the renderer replaces
-`__ENV__` with the environment. On a Worker's very first deploy the binding
+`__ENV__` with the environment. The configs' own `name` is the same
+`<reponame>-web-__ENV__`: the deploy passes that name anyway, and `wrangler
+dev` and `react-router dev` resolve a service binding only to a Worker of
+exactly the binding's name, so locally the Worker is the one it binds — as
+upstream's config, whose `name` and `service` are one string, has it. On a Worker's very first deploy the binding
 names a Worker that does not exist until that deploy finishes. Upstream's
 own Deploy to Cloudflare button makes exactly that first deploy, with the
 binding naming the Worker being created; here it is proven by `wrangler

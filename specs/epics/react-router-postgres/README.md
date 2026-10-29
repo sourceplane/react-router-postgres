@@ -8,7 +8,7 @@ The port keeps the routes, the components, the Hono API, the `BooksService` and 
 
 | Field | Value |
 |-------|-------|
-| Status | In progress — RR0 (the spec) |
+| Status | In progress — RR0–RR3 shipped ([#1](https://github.com/sourceplane/react-router-postgres/pull/1)–[#4](https://github.com/sourceplane/react-router-postgres/pull/4)); RR4 — a baseline — next |
 | Cluster | **RR** (RR0–RR4) |
 | Owner(s) | `apps/web` (the routes, `api/index.js`, `api/books-service.js`, the two wrangler templates) · `packages/db` (the migrations and their runner) · `tests/web`, `tests/db` · `infra/terraform/{supabase,cloudflare-hyperdrive}`, `infra/db-migrate` |
 | Builds on | `postgres-drizzle-starter` (the Lumen data plane: the `supabase` and `cloudflare-hyperdrive` roots, `packages/db` and `db-migrate`, row-level security); `astro-boilerplate` (a Vite build deployed from a committed deploy config) |
