@@ -1,0 +1,35 @@
+// GENERATED from wrangler.template.jsonc by tooling/wire — edit the
+// template, not this file. The committed copy is the fixture render
+// (`pnpm run wire:fixture`); every Orun lane renders its own environment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "react-router-postgres-web",
+  "main": "./api/index.js",
+  "compatibility_date": "2025-10-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "binding": "ASSETS" },
+  // The Supabase project's Postgres, fronted by Hyperdrive (pooled, cached).
+  // api/books-service.js opens a client on env.HYPERDRIVE.connectionString per
+  // call. Locally — `react-router dev`, `wrangler dev` — the binding points at
+  // the Supabase CLI's default database (`supabase start`).
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "00000000000000000000000000000001",
+      "localConnectionString": "postgres://postgres:postgres@localhost:54322/postgres"
+    }
+  ],
+  // The template's own design: the page loaders call the BooksService
+  // entrypoint over RPC through a service binding to THIS Worker. The service
+  // is the Worker's own deployed name, which is per environment.
+  "services": [
+    {
+      "binding": "BOOKS_SERVICE",
+      "service": "react-router-postgres-web-stage",
+      "entrypoint": "BooksService"
+    }
+  ],
+  "placement": { "mode": "smart" },
+  "observability": { "enabled": true },
+  "upload_source_maps": true
+}

@@ -1,0 +1,16 @@
+{
+  "extends": "../../tooling/tsconfig/web.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "types": ["node", "@cloudflare/workers-types"],
+    "paths": { "@web/*": ["../../apps/web/*"] },
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["src/**/*.ts", "stubs/**/*.ts", "src/types.d.ts"]
+}

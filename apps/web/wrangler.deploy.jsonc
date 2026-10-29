@@ -1,0 +1,30 @@
+// GENERATED from wrangler.deploy.template.jsonc by tooling/wire — edit the
+// template, not this file. The committed copy is the fixture render
+// (`pnpm run wire:fixture`); every Orun lane renders its own environment.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "react-router-postgres-web",
+  "main": "./build/server/index.js",
+  "no_bundle": true,
+  "rules": [{ "type": "ESModule", "globs": ["**/*.js", "**/*.mjs"] }],
+  "compatibility_date": "2025-10-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./build/client", "binding": "ASSETS" },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "00000000000000000000000000000001",
+      "localConnectionString": "postgres://postgres:postgres@localhost:54322/postgres"
+    }
+  ],
+  "services": [
+    {
+      "binding": "BOOKS_SERVICE",
+      "service": "react-router-postgres-web-stage",
+      "entrypoint": "BooksService"
+    }
+  ],
+  "placement": { "mode": "smart" },
+  "observability": { "enabled": true },
+  "upload_source_maps": true
+}

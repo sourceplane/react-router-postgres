@@ -1,0 +1,129 @@
+apiVersion: sourceplane.io/v1
+kind: Component
+metadata:
+  name: web
+  description: The books library (React Router v7 SSR and a Hono API on Cloudflare Workers + Static Assets via the Cloudflare Vite plugin, per environment)
+spec:
+  type: cloudflare-workers-assets-turbo
+  lifecycle: production
+  owner: platform
+  # Its pages, attached to it in the workspace's catalog: what the Docs
+  # library shows for it, and what the catalog's docs and runbook checks read.
+  # Generated from what this manifest and its sources declare.
+  docs:
+    overview: docs/overview.md
+    pages:
+      - { path: docs/architecture.md, role: architecture, title: Architecture }
+      - { path: docs/runbook.md, role: runbook, title: Runbook }
+  # `app`, not `web`: a domain and a component share one name space in the
+  # catalog, and a domain called `web` hid this component from it.
+  domain: app
+  path: apps/web
+  # Its own lane per environment: the app's build is the longest job in the
+  # plan, and a shared lane would wait on it.
+  lane: isolated
+  # INFRA BEFORE APP, ENFORCED ON MAIN. A merge to main converges the whole
+  # product in one run: the Supabase project, then the Hyperdrive config over
+  # its database, then the migrations, then this Worker. Its deploy reads the
+  # Hyperdrive id (WIRING_CLOUDFLARE_HYPERDRIVE_<ENV>, rendered into the
+  # HYPERDRIVE binding) and its pages query the migrated `books` table, and
+  # a job resolves its secrets when it STARTS — so it waits on both,
+  # `mode: enforced`, and the ids the applies lease-published are there. A pull
+  # request deploys nothing, so nothing on one waits: every edge is advisory
+  # there.
+  dependsOn:
+    - component: cloudflare-hyperdrive
+      mode: enforced
+      modeRules:
+        - mode: advisory
+          when:
+            triggerRef: github-pull-request
+    - component: db-migrate
+      mode: enforced
+      modeRules:
+        - mode: advisory
+          when:
+            triggerRef: github-pull-request
+  # The wiring documents the cloudflare-hyperdrive root lease-publishes, one
+  # per deployed environment; tooling/wire/live.mjs picks this job's.
+  secretEnv:
+    WIRING_CLOUDFLARE_HYPERDRIVE_STAGE: "secret://react-router-postgres/react-router-postgres/stage/WIRING_CLOUDFLARE_HYPERDRIVE"
+    WIRING_CLOUDFLARE_HYPERDRIVE_PROD: "secret://react-router-postgres/react-router-postgres/prod/WIRING_CLOUDFLARE_HYPERDRIVE"
+  subscribe:
+    environments:
+      - name: dev
+        profile: verify
+      - name: stage
+        profile: verify
+        profileRules:
+          - profile: deploy
+            when:
+              triggerRef: github-push-main
+      - name: prod
+        profile: verify
+        profileRules:
+          - profile: deploy
+            when:
+              triggerRef: github-push-main
+  parameters:
+    nodeVersion: "22"
+    pnpmVersion: "10.12.1"
+
+    workspaceDir: ../..
+    appDir: .
+
+    turboFilter: "@app/web"
+    # The config the dry run and the deploy hand to wrangler. The Cloudflare
+    # Vite plugin builds from wrangler.jsonc (its `main` is the source entry,
+    # api/index.js) and writes a deployable copy beside the Worker it emits
+    # (`build/server/wrangler.json`: no_bundle, main index.js, assets
+    # ../client) — but only once it has built, and the lane checks that this
+    # file exists BEFORE build-app, in a job tree staged without build/. So it
+    # names wrangler.deploy.jsonc, committed as its fixture render, which says
+    # what the generated one says (tests/web holds the two to each other).
+    wranglerConfig: wrangler.deploy.jsonc
+
+    # React Router's build, through the Cloudflare Vite plugin, emits the
+    # Worker under build/server and the static output under build/client —
+    # both deploy in one `wrangler deploy` of wrangler.deploy.jsonc.
+    workerEntrypoint: build/server/index.js
+    assetsDir: build/client
+
+    # Per-env worker name: react-router-postgres-web-{dev,stage,prod}. The
+    # BOOKS_SERVICE self-binding names the same per-env Worker (rendered by
+    # tooling/wire from __ENV__), so each environment calls its own entrypoint.
+    workerName: react-router-postgres-web
+    environmentAwareWorkerName: true
+
+    # The account's workers.dev subdomain; exported to the smoke step as
+    # ${WORKERS_DEV_SUBDOMAIN} and used to build ${DEPLOYED_URL}.
+    workersDevSubdomain: your-workers-subdomain
+
+    installCommand: pnpm install --frozen-lockfile
+    # Both wrangler configs are COMMITTED — their fixture renders, so the
+    # composition's structure check (`test -f wrangler.deploy.jsonc`, before
+    # the build, in a fresh checkout) passes. Every lane re-renders both here,
+    # in its own job tree, for its own environment: stage and prod from the
+    # wiring document their cloudflare-hyperdrive apply published (secretEnv
+    # above, resolved before the job's first step), so the Worker binds the
+    # real Hyperdrive config and its self-binding names its own Worker; dev,
+    # which no root applies to and which only verifies, from the fixture.
+    # Then the build reads wrangler.jsonc, and the deploy wrangler.deploy.jsonc.
+    buildCommand: node ../../tooling/wire/live.mjs --template wrangler.template.jsonc --out wrangler.jsonc --components cloudflare-hyperdrive --env "${ORUN_ENVIRONMENT}" --fixture wiring.fixture.json --fixture-envs dev && node ../../tooling/wire/live.mjs --template wrangler.deploy.template.jsonc --out wrangler.deploy.jsonc --components cloudflare-hyperdrive --env "${ORUN_ENVIRONMENT}" --fixture wiring.fixture.json --fixture-envs dev && pnpm exec turbo run build --filter=@app/web
+
+    # Smoke: the page renders to its end (`</html>` — a render that throws
+    # partway through a streamed page still sent a 200), and /api/health
+    # answers ok from the database — which only the Worker can: the health
+    # route calls the BooksService entrypoint through the BOOKS_SERVICE
+    # self-binding, whose HYPERDRIVE client finds the migrated `books` table
+    # with row-level security on. It proves the self-binding, Hyperdrive, the
+    # Supabase database and the migrations at once, and reads only. Not the
+    # library's heading: it is the product's name, the owner's to change and
+    # HTML-escaped when it carries an `&` or `'`. Each response is buffered
+    # before grep so an early match cannot SIGPIPE curl.
+    smokeCommand: "html=$(curl -sfL \"${DEPLOYED_URL}/\") && echo \"${html}\" | grep -q '</html>' && health=$(curl -sf \"${DEPLOYED_URL}/api/health\") && echo \"${health}\" | grep -q '\"ok\":true' && echo \"${health}\" | grep -q '\"source\":\"database\"'"
+  labels:
+    team: platform
+    layer: delivery
+    surface: web
+    runtime: cloudflare
