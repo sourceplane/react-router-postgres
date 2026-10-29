@@ -14,9 +14,14 @@
 //     applies to and which only verifies, from the fixture.
 // The workers-assets composition deploys one environment per job with no
 // wrangler `--env`, so __ENV__ names the environment a render is for.
+// The Worker is named for its environment, as the composition deploys it
+// (`wrangler deploy --name <workerName>-<env>`), so that BOOKS_SERVICE below —
+// a service binding to this same Worker — resolves wherever it runs: deployed,
+// and under `react-router dev` or `wrangler dev`, where a binding resolves only
+// to a Worker of that exact name.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "react-router-postgres-web",
+  "name": "react-router-postgres-web-__ENV__",
   "main": "./api/index.js",
   "compatibility_date": "2025-10-08",
   "compatibility_flags": ["nodejs_compat"],

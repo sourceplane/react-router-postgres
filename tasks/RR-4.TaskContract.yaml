@@ -10,7 +10,13 @@ spec:
     - apps/web/README.md
     - specs/epics/react-router-postgres/**
     - specs/epics/README.md
+    - apps/web/wrangler.template.jsonc
+    - apps/web/wrangler.deploy.template.jsonc
+    - apps/web/wrangler.jsonc
+    - apps/web/wrangler.deploy.jsonc
+    - tests/web/src/wrangler-config.test.ts
+    - tasks/RR-4.TaskContract.yaml
   doneWhen:
-    - the README's quick start works from a fresh clone against a local Postgres
+    - the README's quick start works from a fresh clone against a local Postgres, the self-binding resolving under wrangler dev as it does deployed
     - IMPLEMENTATION-STATUS lists every PR and departure
   gates: []

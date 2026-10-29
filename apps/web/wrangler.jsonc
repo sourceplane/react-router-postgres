@@ -3,7 +3,7 @@
 // (`pnpm run wire:fixture`); every Orun lane renders its own environment.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "react-router-postgres-web",
+  "name": "react-router-postgres-web-stage",
   "main": "./api/index.js",
   "compatibility_date": "2025-10-08",
   "compatibility_flags": ["nodejs_compat"],

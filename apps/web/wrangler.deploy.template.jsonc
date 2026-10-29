@@ -12,9 +12,14 @@
 //
 // Rendered by tooling/wire exactly as wrangler.template.jsonc is; keep the two
 // in step (tests/web's wrangler-config test fails when they disagree).
+// The Worker is named for its environment, as the composition deploys it
+// (`wrangler deploy --name <workerName>-<env>`), so that BOOKS_SERVICE below —
+// a service binding to this same Worker — resolves wherever it runs: deployed,
+// and under `react-router dev` or `wrangler dev`, where a binding resolves only
+// to a Worker of that exact name.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "react-router-postgres-web",
+  "name": "react-router-postgres-web-__ENV__",
   "main": "./build/server/index.js",
   "no_bundle": true,
   "rules": [{ "type": "ESModule", "globs": ["**/*.js", "**/*.mjs"] }],

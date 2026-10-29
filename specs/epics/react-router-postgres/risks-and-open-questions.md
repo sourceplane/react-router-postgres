@@ -11,8 +11,9 @@ it, the fallback is the upstream-sanctioned one: the loaders call
 `BooksService` in-process when the binding is absent — a code change kept
 out of the port until a live bootstrap shows it is needed. The names must
 stay equal: `component.yaml`'s `workerName` is `<reponame>-web`, the
-composition deploys `<workerName>-<env>`, and the template's `service` is
-`<reponame>-web-__ENV__`; `tests/web` fails if they drift.
+composition deploys `<workerName>-<env>`, and the templates' `name` and
+`service` are both `<reponame>-web-__ENV__`; `tests/web` fails if they
+drift.
 
 ## RR-B — The JavaScript is not type-checked (ACCEPTED)
 

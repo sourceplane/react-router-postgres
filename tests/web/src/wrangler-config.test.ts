@@ -54,19 +54,21 @@ describe("apps/web wrangler configs", () => {
     expect(text).not.toMatch(/"id":\s*"[0-9a-f]{32}"/);
     expect(text).toContain('"id": "@@wiring(cloudflare-hyperdrive/__ENV__:hyperdrive_id)@@"');
     const config = jsonc(text);
+    expect(config.name).toMatch(/-__ENV__$/);
     expect(config.services).toEqual([
-      { binding: "BOOKS_SERVICE", service: `${config.name}-__ENV__`, entrypoint: "BooksService" },
+      { binding: "BOOKS_SERVICE", service: config.name, entrypoint: "BooksService" },
     ]);
   });
 
   it("names the Worker the composition deploys, so the self-binding resolves (workerName-<env>)", () => {
     // The lanes run `wrangler deploy --name <workerName>-<env>`, and a service
     // binding names a Worker by its deployed name: BOOKS_SERVICE reaches this
-    // Worker only while the three names agree.
+    // Worker only while the names agree — deployed, and under `wrangler dev`,
+    // which takes the config's own name.
     const manifest = readFileSync(path.join(app, "component.yaml"), "utf8");
     const workerName = manifest.match(/^\s*workerName:\s*(\S+)\s*$/m)?.[1];
     const deploy = jsonc(readFileSync(path.join(app, "wrangler.deploy.template.jsonc"), "utf8"));
-    expect(workerName).toBe(deploy.name);
+    expect(`${workerName}-__ENV__`).toBe(deploy.name);
     expect(manifest).toMatch(/^\s*wranglerConfig:\s*wrangler\.deploy\.jsonc\s*$/m);
   });
 
@@ -89,7 +91,8 @@ describe("apps/web wrangler configs", () => {
       }),
     );
     expect(rendered.hyperdrive[0].id).toBe("f".repeat(32));
-    expect(rendered.services[0].service).toBe(`${rendered.name}-prod`);
+    expect(rendered.name).toBe("react-router-postgres-web-prod");
+    expect(rendered.services[0].service).toBe(rendered.name);
   });
 
   it("renders dev, which nothing applies to, from the fixture — its own name on the self-binding", () => {
@@ -97,7 +100,8 @@ describe("apps/web wrangler configs", () => {
       render("live.mjs", "wrangler.deploy.template.jsonc", "dev", ["--fixture", path.join(app, "wiring.fixture.json"), "--fixture-envs", "dev"]),
     );
     expect(rendered.hyperdrive[0].id).toBe("00000000000000000000000000000002");
-    expect(rendered.services[0].service).toBe(`${rendered.name}-dev`);
+    expect(rendered.name).toBe("react-router-postgres-web-dev");
+    expect(rendered.services[0].service).toBe(rendered.name);
   });
 
   it("refuses a deploy render with no wiring document", () => {
