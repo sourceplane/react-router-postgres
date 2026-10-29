@@ -106,6 +106,45 @@ importers:
         specifier: 4.136.1
         version: 4.136.1(@cloudflare/workers-types@4.20260702.1)(@types/node@22.20.5)
 
+  packages/db:
+    devDependencies:
+      '@app/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@app/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.20.5
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+
+  tests/db:
+    devDependencies:
+      '@app/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@app/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/tsconfig
+      '@electric-sql/pglite':
+        specifier: 0.5.8
+        version: 0.5.8
+      '@saas/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@types/node':
+        specifier: ^22.9.0
+        version: 22.20.5
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.5)(jiti@2.7.0)(lightningcss@1.30.2)
+
   tests/web:
     devDependencies:
       '@app/eslint-config':
@@ -384,6 +423,9 @@ packages:
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
+
+  '@electric-sql/pglite@0.5.8':
+    resolution: {integrity: sha512-n9tsbUOhwx2epK1V0ZG9Ar4SHWUju04dhmzZXiSBXwBoleOvIfals33NAaWgagQVAL4Rbvx/Ptsu3P+pA09f6Q==}
 
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
@@ -3261,6 +3303,8 @@ snapshots:
   '@cspotcode/source-map-support@0.8.1':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
+
+  '@electric-sql/pglite@0.5.8': {}
 
   '@emnapi/runtime@1.11.3':
     dependencies:
