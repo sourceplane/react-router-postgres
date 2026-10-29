@@ -1,0 +1,16 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: RR-4
+  title: "Ready to instantiate"
+spec:
+  goal: A reader can run, test, preview and deploy the library from a fresh clone, and the as-built status records every departure from upstream
+  affects:
+    - README.md
+    - apps/web/README.md
+    - specs/epics/react-router-postgres/**
+    - specs/epics/README.md
+  doneWhen:
+    - the README's quick start works from a fresh clone against a local Postgres
+    - IMPLEMENTATION-STATUS lists every PR and departure
+  gates: []

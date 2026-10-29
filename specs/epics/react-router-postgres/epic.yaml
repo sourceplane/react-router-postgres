@@ -1,0 +1,39 @@
+# The epic's declaration. metadata.name equals the directory name; metadata.key
+# is the task-key prefix this epic reserves (RR → RR-1, RR-2, …). Owner, target
+# date and health are the platform's — never written here.
+apiVersion: orun.io/v1
+kind: Epic
+metadata:
+  name: react-router-postgres
+  key: RR
+spec:
+  title: "Cloudflare's React Router + Postgres SSR template on Cloudflare Workers with Supabase Postgres"
+  summary: "Cloudflare's React Router + Postgres SSR template — a server-rendered books library: React Router v7 in SSR mode and a Hono API in one Worker, reading a books table through Hyperdrive from its own BooksService entrypoint over a service binding to itself — runs per environment on Cloudflare Workers + Static Assets with the database a Supabase Postgres project, both provisioned by Terraform through Orun, inside the Lumen baseline's repository conventions. The routes, the components, the Hono API and the BooksService stay as written; what moves is where the schema and the sample books come from (upstream's init.sql becomes db-migrate's migrations, with row-level security, applied before the app serves) and where the bindings come from (rendered per environment from the Hyperdrive root's wiring document) — and the repository is an Orun baseline that instantiates the whole product in one landing."
+  state: started
+  milestones:
+    - name: "RR0 — the spec"
+      exitCriteria:
+        - "the doc set and the task contracts are on main, with the repository's intent, CI and tooling"
+      tasks: [RR-1]
+    - name: "RR1 — the app on Workers"
+      exitCriteria:
+        - "apps/web is the upstream template, built by the Cloudflare Vite plugin, with the BooksService opening a Postgres client per call from the HYPERDRIVE binding"
+        - "both wrangler configs render per environment from the cloudflare-hyperdrive root's wiring document (fixture in verify, live in deploy), and the BOOKS_SERVICE self-binding names the environment's own Worker"
+        - "`pnpm typecheck`, `pnpm lint`, `pnpm test` and `pnpm build` are green"
+      tasks: [RR-2]
+    - name: "RR2 — Supabase, Hyperdrive and the schema"
+      exitCriteria:
+        - "infra/terraform/supabase and infra/terraform/cloudflare-hyperdrive provision the stage and prod project and config and publish the wiring document the app renders from"
+        - "upstream's init.sql is three migrations (the table, its nine books, row-level security) that infra/db-migrate applies per environment before the app"
+      tasks: [RR-3]
+    - name: "RR3 — ready to instantiate"
+      exitCriteria:
+        - "the README says how to run, test, preview and deploy it, locally against the Supabase CLI or any Postgres"
+        - "the as-built status records every departure from the upstream template"
+      tasks: [RR-4]
+    - name: "RR4 — a baseline"
+      exitCriteria:
+        - "blueprint.yaml (the console card, requires [github, cloudflare, supabase]) and repo-blueprint.yaml (the build) take a new product from nothing to live on stage and prod in ONE landing, then record it (01-product, 02-docs)"
+        - "the product's own push-to-main plan converges supabase → cloudflare-hyperdrive → db-migrate → web per environment, every edge enforced on main and advisory on a pull request"
+        - "Baseline CI is green: contract tests, the blueprint read by the pinned orun, the leak gate, the offline bootstrap and the product's plans, and the end-to-end tier — which serves the built Worker under its own name so the self-binding resolves, over a migrated local Postgres"
+      tasks: [RR-5]

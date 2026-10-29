@@ -1,0 +1,20 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: RR-3
+  title: "Supabase, Hyperdrive and the schema"
+spec:
+  goal: A Supabase project and a Hyperdrive config per environment from Terraform publish the wiring the app renders from, and upstream's init.sql — the table and its nine books — is applied by db-migrate with row-level security before the app serves
+  affects:
+    - infra/terraform/supabase/**
+    - infra/terraform/cloudflare-hyperdrive/**
+    - infra/db-migrate/**
+    - packages/db/**
+    - tests/db/**
+    - pnpm-lock.yaml
+  doneWhen:
+    - terraform validate passes on both roots
+    - the wiring key the app's templates name is the one the Hyperdrive root publishes
+    - the migrations apply in order, re-apply nothing, seed nine books with the id sequence past them, and leave no table in public without row-level security
+  gates:
+    - checks

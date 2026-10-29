@@ -1,0 +1,37 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: RR-5
+  title: "A baseline"
+spec:
+  goal: The repository is an Orun baseline on the Lumen conventions — a card and a build document that take a new product from nothing to live on stage and prod in one landing (Supabase, then Hyperdrive, then the migrations, then the app), branded as its own, with gates that prove it offline
+  affects:
+    - blueprint.yaml
+    - repo-blueprint.yaml
+    - BOOTSTRAP.md
+    - README.md
+    - .baseline/**
+    - tooling/rebrand/**
+    - tooling/bootstrap/**
+    - tooling/catalog/**
+    - hooks/**
+    - testing/**
+    - docs/phases/**
+    - ai/context/**
+    - .github/workflows/**
+    - intent.yaml
+    - apps/web/**
+    - packages/db/**
+    - infra/**
+    - tests/web/**
+    - tests/db/**
+    - specs/**
+    - tasks/**
+  doneWhen:
+    - the pinned orun reads repo-blueprint.yaml, the card agrees with it, and orun catalog validate reports no errors
+    - the product's own push-to-main plan orders supabase → cloudflare-hyperdrive → db-migrate → web, enforced, and a pull request's plan holds the same edges advisory
+    - a product built offline installs, migrates a local Postgres with its own runner, builds in the job tree orun stages, dry-deploys both bindings, and serves the library under its own deployed name, its loaders reading the database through the self-binding under concurrent first requests
+    - every component carries generated docs that agree with its manifest
+    - the as-built status records the departures and what is not yet proven live
+  gates:
+    - checks

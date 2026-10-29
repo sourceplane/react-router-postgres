@@ -1,0 +1,17 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: RR-2
+  title: "The app on Workers"
+spec:
+  goal: apps/web is Cloudflare's React Router + Postgres SSR template as written, built by the Cloudflare Vite plugin, its Hyperdrive binding and its BOOKS_SERVICE self-binding rendered per environment into the two wrangler configs, with /api/health reporting the database
+  affects:
+    - apps/web/**
+    - tests/web/**
+    - pnpm-lock.yaml
+  doneWhen:
+    - pnpm typecheck, lint, test and build are green
+    - the committed wrangler.jsonc and wrangler.deploy.jsonc are their fixture render, and agree on every binding
+    - a dry-run deploy binds env.HYPERDRIVE and env.BOOKS_SERVICE to the environment's own Worker
+  gates:
+    - checks
