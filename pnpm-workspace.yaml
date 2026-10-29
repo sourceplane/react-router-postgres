@@ -1,0 +1,18 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "tests/*"
+  - "tooling/*"
+
+# pnpm 10 blocks dependency build scripts unless allow-listed; wrangler's
+# workerd and esbuild need theirs to verify their platform binaries.
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+  - sharp
+
+# tests/db runs the migrations in PGlite (Postgres compiled to WASM). Pinned:
+# the app never imports it, and a test database must not float to whatever was
+# published yesterday.
+overrides:
+  "@electric-sql/pglite": "0.5.8"
