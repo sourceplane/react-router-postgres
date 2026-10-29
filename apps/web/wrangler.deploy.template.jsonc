@@ -1,0 +1,41 @@
+// What `wrangler deploy` ships: the Worker and the static assets
+// `react-router build` emitted, with the settings and bindings of
+// wrangler.template.jsonc beside it.
+//
+// wrangler.template.jsonc is what the Cloudflare Vite plugin BUILDS from (its
+// `main` is the source entry). The plugin then writes a deployable copy,
+// build/server/wrangler.json — but that file exists only after a build, and
+// the deploy lanes check that the config they deploy exists BEFORE they build
+// (and stage each job without build/). So the deploy names this file's
+// render, which says what the generated one says: the built entry, no
+// re-bundling, the build's chunks as ES modules, the client output as assets.
+//
+// Rendered by tooling/wire exactly as wrangler.template.jsonc is; keep the two
+// in step (tests/web's wrangler-config test fails when they disagree).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "react-router-postgres-web",
+  "main": "./build/server/index.js",
+  "no_bundle": true,
+  "rules": [{ "type": "ESModule", "globs": ["**/*.js", "**/*.mjs"] }],
+  "compatibility_date": "2025-10-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./build/client", "binding": "ASSETS" },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "@@wiring(cloudflare-hyperdrive/__ENV__:hyperdrive_id)@@",
+      "localConnectionString": "postgres://postgres:postgres@localhost:54322/postgres"
+    }
+  ],
+  "services": [
+    {
+      "binding": "BOOKS_SERVICE",
+      "service": "react-router-postgres-web-__ENV__",
+      "entrypoint": "BooksService"
+    }
+  ],
+  "placement": { "mode": "smart" },
+  "observability": { "enabled": true },
+  "upload_source_maps": true
+}

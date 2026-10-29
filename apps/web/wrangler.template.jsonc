@@ -1,0 +1,48 @@
+// What the Cloudflare Vite plugin BUILDS from (and `react-router dev` runs):
+// the Worker's source entry, its compatibility and its bindings. What deploys
+// is wrangler.deploy.jsonc, rendered from wrangler.deploy.template.jsonc beside
+// this; keep the two in step (tests/web's wrangler-config test holds them to
+// it).
+//
+// Rendered by tooling/wire: edit the template, never the render.
+//   - committed: the render from wiring.fixture.json (`pnpm run wire:fixture`),
+//     a placeholder Hyperdrive id. `react-router dev` and the composition's
+//     structure check read the renders, so they have to exist without a build.
+//   - deployed: each lane re-renders it in its own job tree, before the build,
+//     from the wiring document the `cloudflare-hyperdrive` Terraform root
+//     lease-publishes (WIRING_CLOUDFLARE_HYPERDRIVE_<ENV>); dev, which no root
+//     applies to and which only verifies, from the fixture.
+// The workers-assets composition deploys one environment per job with no
+// wrangler `--env`, so __ENV__ names the environment a render is for.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "react-router-postgres-web",
+  "main": "./api/index.js",
+  "compatibility_date": "2025-10-08",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "binding": "ASSETS" },
+  // The Supabase project's Postgres, fronted by Hyperdrive (pooled, cached).
+  // api/books-service.js opens a client on env.HYPERDRIVE.connectionString per
+  // call. Locally — `react-router dev`, `wrangler dev` — the binding points at
+  // the Supabase CLI's default database (`supabase start`).
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "@@wiring(cloudflare-hyperdrive/__ENV__:hyperdrive_id)@@",
+      "localConnectionString": "postgres://postgres:postgres@localhost:54322/postgres"
+    }
+  ],
+  // The template's own design: the page loaders call the BooksService
+  // entrypoint over RPC through a service binding to THIS Worker. The service
+  // is the Worker's own deployed name, which is per environment.
+  "services": [
+    {
+      "binding": "BOOKS_SERVICE",
+      "service": "react-router-postgres-web-__ENV__",
+      "entrypoint": "BooksService"
+    }
+  ],
+  "placement": { "mode": "smart" },
+  "observability": { "enabled": true },
+  "upload_source_maps": true
+}

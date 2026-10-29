@@ -1,0 +1,22 @@
+// The template is JavaScript and stays as written; tsc type-checks the
+// TypeScript this port adds (the product-name seam, the Worker's bindings) and
+// resolves React Router's generated route types. `checkJs` is off on purpose:
+// upstream does not pass its own strict checkJs (no React types, untyped
+// props), and rewriting its components to satisfy it is not porting them.
+{
+  "extends": "../../tooling/tsconfig/web.json",
+  "include": ["app/**/*.ts", "env.d.ts", ".react-router/types/**/*"],
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "incremental": false,
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": false,
+    "jsx": "react-jsx",
+    "types": ["@cloudflare/workers-types", "vite/client", "node"],
+    "rootDirs": [".", "./.react-router/types"],
+    "verbatimModuleSyntax": true
+  }
+}
