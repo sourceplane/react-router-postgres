@@ -1,0 +1,8 @@
+{
+  "reponame": "acme-books",
+  "productname": "Acme Books",
+  "productdomain": "acme.dev",
+  "githuborg": "acme-inc",
+  "subdomain": "acme",
+  "orunWorkspace": "ws_XXXXXXXX"
+}

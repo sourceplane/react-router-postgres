@@ -11,7 +11,7 @@ at `7ae5750`, MIT).
 | RR1 — the app on Workers | ✅ Shipped | [#2](https://github.com/sourceplane/react-router-postgres/pull/2) (RR-2) |
 | RR2 — Supabase, Hyperdrive and the schema | ✅ Shipped (validated; apply gated on a linked workspace) | [#3](https://github.com/sourceplane/react-router-postgres/pull/3) (RR-3) |
 | RR3 — ready to instantiate | ✅ Shipped | [#4](https://github.com/sourceplane/react-router-postgres/pull/4) (RR-4) |
-| RR4 — a baseline | Planned | — |
+| RR4 — a baseline | ✅ Shipped (offline-proven; no live bootstrap yet, risk RR-H) | [#5](https://github.com/sourceplane/react-router-postgres/pull/5) (RR-5), tagged `baseline-v1` |
 
 ## Departures from the upstream template
 
@@ -122,3 +122,53 @@ handlers name and do not use. No upstream line changed for lint.
   Supabase project and a live deploy — all need the product linked to an
   Orun workspace with Supabase and Cloudflare connections (risk RR-H).
 
+## RR4 — a baseline (RR-5)
+
+The repository is an Orun baseline on the Lumen conventions, held to the
+starter standard and built the way turso-starter builds a product: ONE
+landing. `blueprint.yaml` is the card (`requires: [github, cloudflare,
+supabase]`; the five brokered keys — `CLOUDFLARE_API_TOKEN`,
+`CLOUDFLARE_HYPERDRIVE_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`,
+`SUPABASE_ACCESS_TOKEN`, `SUPABASE_ORG_ID` — as a preview; the programme
+`01-product`, `02-docs`; `expectedMinutes` 18, the two phase cards' 17 + 1).
+`repo-blueprint.yaml` places every module in `01-product` and lands it as one
+pull request; `02-docs` records the deployment from probed facts and puts
+the bootstrap's deferrals back.
+
+- **The rename engine** (`tooling/rebrand/rebrand.mjs`, Cirrus's engine,
+  this tree's rules): the repository slug, `SITE_NAME`, the Worker and the
+  self-binding's service, the Supabase project and the Hyperdrive config,
+  the domain placeholder and the workers.dev subdomain. Upstream's own
+  identity — its directory in cloudflare/templates, its name, its Deploy to
+  Cloudflare link — is protected: the banner and the app's README say where
+  the code came from. The epic slug a bootstrap files its task under is
+  `library-baselining`, which does not contain the repository slug, so the
+  engine's word-bounded rule never rewrites it.
+- **The edges.** `cloudflare-hyperdrive` on `supabase`; `db-migrate` on
+  both; `web` on `cloudflare-hyperdrive` and `db-migrate` — `mode: enforced`
+  on a push to main, advisory on a pull request.
+- **The component docs** are generated (`tooling/catalog/gen-component-docs.py`)
+  and checked in Baseline CI.
+
+### Verified (RR4)
+
+- Contract tests: manifest, phases, coverage, rebrand, retouch,
+  bootstrap-defer; the component docs match their manifests; `orun catalog
+  validate` reports no errors.
+- The blueprint read by the bootstrap floor (`orun new --status`); the leak
+  gate (137 files derived, nothing local, built or provenance-shaped); the
+  offline bootstrap with the blueprint's own hooks, then the product's own
+  plan for the 01-product merge — supabase → cloudflare-hyperdrive →
+  db-migrate → web on stage and prod, enforced; advisory on a pull request —
+  and a `--resume` that changes nothing.
+- The end-to-end tier: the product installed, type-checked, linted, tested
+  and built; the migrations applied by the product's own runner to a local
+  Postgres with Supabase's roles, and a re-apply applying nothing; the stage
+  web lane's own steps in the job tree orun stages, its dry deploy binding
+  the stage Hyperdrive id and `BOOKS_SERVICE (<repo>-web-stage#BooksService)`;
+  the built Worker served by `wrangler dev` under that name over the
+  database — eight concurrent first requests each rendering the nine books
+  through the self-binding, the component's own smoke, every route, a book
+  added behind the app's back taking id 10 — and the Data API's roles
+  reading none of it.
+- Not verified: everything risk RR-H names.

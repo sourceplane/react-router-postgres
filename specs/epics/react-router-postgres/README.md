@@ -8,7 +8,7 @@ The port keeps the routes, the components, the Hono API, the `BooksService` and 
 
 | Field | Value |
 |-------|-------|
-| Status | In progress — RR0–RR3 shipped ([#1](https://github.com/sourceplane/react-router-postgres/pull/1)–[#4](https://github.com/sourceplane/react-router-postgres/pull/4)); RR4 — a baseline — next |
+| Status | ✅ RR0–RR4 shipped ([#1](https://github.com/sourceplane/react-router-postgres/pull/1)–[#5](https://github.com/sourceplane/react-router-postgres/pull/5); RR4 tagged `baseline-v1`). Terraform applies, a live db-migrate apply and a live deploy are proven only by a live bootstrap (risk RR-H) |
 | Cluster | **RR** (RR0–RR4) |
 | Owner(s) | `apps/web` (the routes, `api/index.js`, `api/books-service.js`, the two wrangler templates) · `packages/db` (the migrations and their runner) · `tests/web`, `tests/db` · `infra/terraform/{supabase,cloudflare-hyperdrive}`, `infra/db-migrate` |
 | Builds on | `postgres-drizzle-starter` (the Lumen data plane: the `supabase` and `cloudflare-hyperdrive` roots, `packages/db` and `db-migrate`, row-level security); `astro-boilerplate` (a Vite build deployed from a committed deploy config) |
@@ -16,6 +16,7 @@ The port keeps the routes, the components, the Hono API, the `BooksService` and 
 | Changes | `init.sql` → migrations with row-level security; the wrangler config rendered per environment (two: the build's and the deploy's); `/api/health`; the product name in one file; tests, two Terraform roots, the deploy contract |
 | Decisions locked | (1) The app's JavaScript stays as written — not type-checked (design §2). (2) The self-binding is kept: `BOOKS_SERVICE` names `<reponame>-web-<env>`, which is the name the deploy uses (design §3). (3) Two configs: the Vite plugin builds from `wrangler.jsonc`, the deploy reads the committed `wrangler.deploy.jsonc` that points at the build's output (design §3). (4) Neon → Supabase (design §4). (5) Infra before app on main: supabase → cloudflare-hyperdrive → db-migrate → web, enforced; advisory on pull requests. |
 | Gate | RR2 applies only with a linked workspace (Supabase + Cloudflare connections); verified by `terraform validate` and, from RR4, the offline end-to-end tier. |
+| Shipped as | `baseline-v1` ([#5](https://github.com/sourceplane/react-router-postgres/pull/5)); proven offline (Baseline CI: migrated into a local Postgres and served through the built Worker under `wrangler dev`, the self-binding resolving to itself), deploy gated until a workspace is linked |
 
 ## Read order
 

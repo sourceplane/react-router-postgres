@@ -8,10 +8,9 @@ Hyperdrive** — running on **Cloudflare Workers + Static Assets** through the
 [Cloudflare Vite plugin](https://developers.cloudflare.com/workers/vite-plugin/),
 with the database a **Supabase Postgres** project, both provisioned by
 Terraform through [Orun](https://github.com/sourceplane/orun) and the schema
-and its books applied by Orun's `db-migrate` — and, at its last milestone
-(RR4), packaged as an **Orun baseline**: one command taking a new product
-from nothing to live on stage and prod, in its own repository, under its own
-name, in ONE landing.
+and its books applied by Orun's `db-migrate`, and packaged as an **Orun
+baseline**: one command takes a new product from nothing to live on stage and
+prod, in its own repository, under its own name, in ONE landing.
 
 The template's code is the code: its routes, components, styles, covers and
 `BooksService` are as upstream wrote them, JavaScript included. What the port
@@ -24,9 +23,56 @@ none of it. The self-binding stays: the Worker binds its own per-environment
 name, rendered into its config per lane. Two additions: the product's name in
 one place (`apps/web/app/lib/site.ts`, the library's heading and the page's
 `<title>`), and `/api/health`, which the deploy's smoke and the bootstrap's
-probes read. See [`specs/epics/react-router-postgres`](specs/epics/react-router-postgres/README.md)
+probes read. What the baseline adds is everything needed to make a copy of it
+somebody else's. See [`specs/epics/react-router-postgres`](specs/epics/react-router-postgres/README.md)
 for the design, the milestones and the as-built status, including every
 departure.
+
+## Instantiating a product
+
+```bash
+git clone --depth 1 --branch <baseline-tag> https://github.com/sourceplane/react-router-postgres
+cd react-router-postgres
+orun new --blueprint repo-blueprint.yaml --out ~/products/acme-books --run-hooks --resume \
+  --set reponame=acme-books --set productname="Acme Books" \
+  --set githuborg=acme-inc --set subdomain=<workers-dev-subdomain>
+```
+
+Or, once the platform's registry lists it, from the Orun console (Baselines →
+`react-router-postgres` → Build). Two phases: **`01-product`** creates the
+repository, mints the five brokered credentials (Cloudflare and Supabase) and
+lands the whole product as one pull request, whose convergence on `main`
+provisions and deploys it per environment in a fixed order —
+
+```
+supabase ──▶ cloudflare-hyperdrive ──▶ db-migrate ──▶ web
+```
+
+— each edge `mode: enforced` on a push to main and advisory on a pull
+request; then **`02-docs`** records the live deployment from probed facts.
+**[BOOTSTRAP.md](BOOTSTRAP.md)** is the operator guide;
+[docs/phases/](docs/phases/README.md) has a page per phase. The Supabase
+organization needs room for two projects (stage and prod) — the free plan's
+limit.
+
+The new repository receives the **product only** — the app, the Terraform
+roots, the migrations, the tests, its CI, its tooling, a README of its own
+and its operating contract — renamed throughout to the product's name,
+repository, Worker, Supabase project and Hyperdrive config. None of this
+repository's machinery ships. The card asks for no third-party key: the app
+uses none.
+
+| What makes it a baseline | Where |
+|---|---|
+| The console card (inputs, secrets, programme) | `blueprint.yaml` |
+| The build document (modules, phases, hooks) | `repo-blueprint.yaml` |
+| This tree's identity, the product's README and the bootstrap's task contracts | `.baseline/` |
+| The rename engine (product-name seam: `apps/web/app/lib/site.ts`) | `tooling/rebrand/rebrand.mjs` |
+| The bootstrap's helpers (deferrals, redeploy marker, work-tree strip) | `tooling/bootstrap/` |
+| The deployment-record renderer | `hooks/render-deployment-docs.sh` |
+| The product's context pack | `ai/context/` |
+| The baseline's tests: contract, leak, offline bootstrap and plans, end to end | `testing/`, `.github/workflows/baseline.yml` |
+| Cutting a `baseline-vN` tag | `.github/workflows/tag.yml` |
 
 ## What is here (the product)
 
@@ -52,73 +98,11 @@ pnpm test
 pnpm build              # react-router build → apps/web/build/{server,client}
 ```
 
-The build needs no database: the pages render per request.
-
-## Running it locally
-
-You need a Postgres on `localhost:54322` — the Supabase CLI's default
-(`supabase start`) — or any Postgres whose URL you put in
-`LOCAL_DATABASE_URL`, and `psql` on your PATH.
-
-1. **Schema and books.** Apply `packages/db`'s migrations — the same files CI
-   applies to the real databases:
-
-   ```bash
-   pnpm --filter @app/web db:migrate:local
-   ```
-
-2. **Run.** Either React Router's dev server, which runs the Worker in
-   workerd through the Cloudflare Vite plugin (the `HYPERDRIVE` binding
-   points at `localhost:54322` through `wrangler.jsonc`'s
-   `localConnectionString`):
-
-   ```bash
-   pnpm --filter @app/web dev          # http://localhost:5173
-   ```
-
-   or the built Worker under `wrangler dev`, as it deploys:
-
-   ```bash
-   pnpm build
-   pnpm --filter @app/web preview      # http://localhost:8787
-   ```
-
-   For a database elsewhere, `CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE=<url>`
-   overrides the local connection string. With no database at all the pages
-   render the template's demo data; `/api/health` says whether the database
-   is reachable and migrated.
-
-## How it deploys
-
-Merges to `main` converge through [Orun](https://github.com/sourceplane/orun):
-`.github/workflows/ci.yml` plans the changed components and runs each lane
-against the workspace in `intent.yaml`. Per environment the order is
-enforced — **the Supabase project, then the Hyperdrive config over its
-database, then the migrations, then the Worker** — because each reads what
-the one before it published: the project's ref and password, the Hyperdrive
-id the Worker binds, the table the pages query. `stage` deploys first and
-`prod` once stage has converged on the same commit; `dev` only verifies.
-Every deploy is smoke-tested over HTTP: the library renders, and
-`/api/health` answers only when the Worker reaches a migrated database —
-through its `BOOKS_SERVICE` binding to itself, as the pages do.
-
-The pipeline holds one credential, GitHub's own `GITHUB_TOKEN`. The
-Cloudflare tokens and account id and the Supabase access token and org id
-are brokered per run from the workspace's connections; the Supabase
-project's credentials and the Hyperdrive id are published by the Terraform
-applies as orun secrets. Nothing provider-shaped is stored in the repository
-or in GitHub, and the app needs no secret of its own.
-
-Every table in `public` has row-level security and no policy, so Supabase's
-Data API (which serves `public` to the project's anon key) returns none of
-it; the app connects as the table's owner and is not affected.
-
-**Deploy by hand.** **Run workflow** on the CI workflow in GitHub's Actions tab (on `main`), runs
-`ci.yml` for the environment and components you pick, and each one deploys
-exactly as a merge would deploy it. Leave the component blank to redeploy
-every component in that environment, with nothing changed: after rotating a
-secret, say. A component with nothing to run in that environment (a test
-suite in `prod`) is left out with a notice.
+The build needs no database. Running it locally — a Postgres on
+`localhost:54322` (`supabase start`), `pnpm --filter @app/web db:migrate:local`,
+then `react-router dev` or the built Worker under `wrangler dev` — is in the
+product's README (`.baseline/product/README.md`), which is what a product
+built from here carries.
 
 ## How it maps to Cloudflare's template
 
@@ -131,16 +115,15 @@ suite in `prod`) is left out with a notice.
 | Demo mode on mock data when no database is bound | Kept as upstream wrote it; a deployed product always binds its database, and `/api/health` reports mock data as unhealthy |
 | Smart Placement, observability, source maps | Kept |
 | No `<title>` | `meta()` in `app/root.jsx` names the product (the seam in `app/lib/site.ts`) |
+| "Deploy to Cloudflare" (clone the template) | `orun new --blueprint repo-blueprint.yaml` — a new repository, branded, provisioned, migrated, deployed |
 
 ## CI
 
-`.github/workflows/ci.yml` is the Orun pipeline: `orun plan --changed`, then
-one job per lane. A pull request runs the verify lanes (the app built and
-dry-deployed per environment, both Terraform roots checked and planned, the
-migrations planned); a merge applies, migrates and deploys stage → prod. It
-plans nothing while `intent.yaml` names the placeholder workspace
-`ws_CHANGE_ME`, as this repository does until it is linked. The baseline's
-own test tiers arrive with RR4.
+| Workflow | What it runs | Ships to a product |
+|---|---|---|
+| `ci.yml` | the Orun pipeline, and the only workflow a product carries: `orun plan --changed`, then one job per lane. A pull request runs the verify lanes (the app built and dry-deployed per environment, both Terraform roots checked and planned, the migrations planned), except the bootstrap's own landings (`orun/BASE-*`), where `plan` alone runs and nothing waits for it — the landing was checked in the build box; a merge applies, migrates and deploys stage → prod. The lanes do not typecheck, lint or run the tests: `baseline.yml`'s e2e tier does, on the landing, before each tag. It plans nothing while `intent.yaml` names the placeholder workspace `ws_CHANGE_ME`, as this repository does. A manual run (Orunbase's Deploy button, or Run workflow on `main`) plans the environment and components it names under the push-to-main trigger, so they deploy as a merge deploys them | yes |
+| `baseline.yml` | the baseline's own tiers: contract tests; the blueprint read by the pinned orun, the leak gate, the offline bootstrap and the product's own plans; the product built, migrated into a local Postgres, dry-deployed and served — its self-binding resolving to itself — and its table shut to the Data API's roles | no |
+| `tag.yml` | cuts a `baseline-vN` tag (manual) | no |
 
 ## Credit
 
